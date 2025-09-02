@@ -1,4 +1,3 @@
-
 import datetime
 from src.bot.services.schedule_service import ScheduleService
 

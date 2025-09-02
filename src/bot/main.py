@@ -18,6 +18,8 @@ from src.bot.handlers.commands import CommandHandlers
 from src.bot.handlers.callbacks import CallbackHandlers
 from src.bot.handlers.messages import MessageHandlers
 from src.bot.services.notification_service import NotificationService
+from src.bot.services.daily_schedule_service import DailyScheduleService
+from src.bot.services.poll_service import PollScheduler
 
 
 class Bot:
@@ -28,6 +30,8 @@ class Bot:
         self.scheduler = AsyncIOScheduler()
         self.application = None
         self.notification_service = None
+        self.daily_schedule_service = None
+        self.poll_scheduler = None
         self._shutdown_requested = False
 
         # Инициализация обработчиков
@@ -58,6 +62,8 @@ class Bot:
         """Настроить обработчики."""
         # Инициализируем сервисы и обработчики
         self.notification_service = NotificationService(self.scheduler, self.application)
+        self.daily_schedule_service = DailyScheduleService(self.scheduler, self.application)
+        self.poll_scheduler = PollScheduler(self.scheduler, self.application)
         self.callback_handlers = CallbackHandlers(self.notification_service)
         self.message_handlers = MessageHandlers(self.notification_service)
 
@@ -118,46 +124,6 @@ class Bot:
         # Запуск планировщика
         self.scheduler.start()
         self.logger.info("Запуск Telegram-бота…")
-
-        # Ежедневное планирование опроса
-
-        from src.bot.services.poll_service import send_presence_poll
-        from src.bot.services.poll_plan_utils import get_poll_plan_for_day, MINUTES_BEFORE_PAIR
-
-        def schedule_poll_for_day(target_date):
-            poll_time = get_poll_plan_for_day(target_date)
-            if poll_time:
-                now = datetime.datetime.now()
-                delay = (poll_time - now).total_seconds()
-                self.logger.info(f"Планирование опроса: poll_time={poll_time}, now={now}, delay={delay}, minutes_before_pair={MINUTES_BEFORE_PAIR}")
-                if delay > 0:
-                    self.scheduler.add_job(
-                        send_presence_poll,
-                        'date',
-                        run_date=poll_time,
-                        args=[self.application.bot, target_date],
-                        id=f"presence_poll_{target_date.isoformat()}"
-                    )
-                    self.logger.info(f"Опрос запланирован на {poll_time}")
-                else:
-                    self.logger.info(f"Время для опроса уже прошло, задача не запланирована.")
-            else:
-                self.logger.info(f"Нет ни одной пары для {target_date.strftime('%A')} ({target_date})")
-
-        def daily_poll_job():
-            today = datetime.date.today()
-            schedule_poll_for_day(today)
-
-        # Запускать планирование опроса каждый день в 00:01
-        self.scheduler.add_job(
-            daily_poll_job,
-            'cron',
-            hour=0,
-            minute=1,
-            id='schedule_daily_poll_job'
-        )
-        # Также планируем опрос на сегодня при запуске (если бот стартует не ночью)
-        daily_poll_job()
 
         # Запуск бота
         try:

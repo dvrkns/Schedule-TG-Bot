@@ -20,7 +20,8 @@ Many existing solutions are either closed, complex, and have a lot of unnecessar
 
 - **Schedule:** Sends daily or weekly schedules to users.
 - **Notifications:** Reminds users of upcoming events or changes.
-- **Interactive Commands:** `/start`, `/help`, `/today`, and more.
+- **Interactive Commands:** `/start`, `/today`, `/tomorrow`, `/timetable`, `/campus`, `/search`, `/dev` and more.
+- **Daily Schedule Auto-send:** Automatically sends tomorrow's schedule at a specified time (default: 18:00) to a designated thread.
 - **Callback Handlers:** Interactive buttons for quick actions.
 - **Custom Keyboards:** User-friendly navigation in chat.
 - **Building Images:** Visual assets for locations.
@@ -49,10 +50,23 @@ Many existing solutions are either closed, complex, and have a lot of unnecessar
 
 ## Technology Stack
 
-- **Python 3.11+**
+- **Python 3.9.6**
 - **python-telegram-bot** (Telegram Bot API framework)
 - **apscheduler** (task scheduling)
 - **JSON** for notifications and schedule data
+
+## Architecture
+
+The bot follows a modular service-based architecture:
+
+- **Main Bot Class** (`src/bot/main.py`) - orchestrates all services and handlers
+- **Service Layer** - handles business logic:
+  - `NotificationService` - manages user notifications
+  - `DailyScheduleService` - handles automatic daily schedule sending
+  - `PollScheduler` - manages daily presence polls
+  - `ScheduleService` - provides schedule data
+- **Handler Layer** - processes user interactions
+- **Utility Files** - contain configuration and helper functions
 
 ## License
 
