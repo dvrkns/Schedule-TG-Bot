@@ -40,6 +40,7 @@ Many existing solutions are either closed, complex, and have a lot of unnecessar
    ```
 3. **Configure the Bot:**
    - Add the bot token and chat IDs to `src/utils/secrets.py`.
+   - Configure which services to enable in `src/bot/services/service_config.py`.
    - Configure images and other resources for your organization in assets/
    - Add your schedule using the template in src/data/schedule
    - Optionally, change the author name for the `/dev` command in the configuration.
@@ -67,6 +68,16 @@ The bot follows a modular service-based architecture:
   - `ScheduleService` - provides schedule data
 - **Handler Layer** - processes user interactions
 - **Utility Files** - contain configuration and helper functions
+
+## Service Configuration
+
+You can easily enable or disable specific services by editing `src/bot/services/service_config.py`:
+
+- **ENABLE_DAILY_SCHEDULE_SERVICE** - Automatic daily schedule sending
+- **ENABLE_POLL_SERVICE** - Daily presence polls
+- **ENABLE_NOTIFICATION_SERVICE** - User notifications and interactive handlers
+
+This allows you to run the bot with only the features you need, improving performance and reducing resource usage.
 
 ## License
 

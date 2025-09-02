@@ -20,6 +20,12 @@ from src.bot.handlers.messages import MessageHandlers
 from src.bot.services.notification_service import NotificationService
 from src.bot.services.daily_schedule_service import DailyScheduleService
 from src.bot.services.poll_service import PollScheduler
+from src.bot.services.service_config import (
+    is_daily_schedule_enabled,
+    is_poll_service_enabled,
+    is_notification_service_enabled,
+    get_enabled_services
+)
 
 
 class Bot:
@@ -61,9 +67,30 @@ class Bot:
     def setup_handlers(self):
         """Настроить обработчики."""
         # Инициализируем сервисы и обработчики
-        self.notification_service = NotificationService(self.scheduler, self.application)
-        self.daily_schedule_service = DailyScheduleService(self.scheduler, self.application)
-        self.poll_scheduler = PollScheduler(self.scheduler, self.application)
+        self.notification_service = None
+        self.daily_schedule_service = None
+        self.poll_scheduler = None
+
+        # Инициализируем только включенные сервисы
+        if is_notification_service_enabled():
+            self.notification_service = NotificationService(self.scheduler, self.application)
+            self.logger.info("NotificationService включен")
+        else:
+            self.logger.info("NotificationService отключен")
+
+        if is_daily_schedule_enabled():
+            self.daily_schedule_service = DailyScheduleService(self.scheduler, self.application)
+            self.logger.info("DailyScheduleService включен")
+        else:
+            self.logger.info("DailyScheduleService отключен")
+
+        if is_poll_service_enabled():
+            self.poll_scheduler = PollScheduler(self.scheduler, self.application)
+            self.logger.info("PollScheduler включен")
+        else:
+            self.logger.info("PollScheduler отключен")
+
+        # Инициализируем обработчики (всегда, но с проверкой доступности сервиса)
         self.callback_handlers = CallbackHandlers(self.notification_service)
         self.message_handlers = MessageHandlers(self.notification_service)
 
@@ -124,6 +151,10 @@ class Bot:
         # Запуск планировщика
         self.scheduler.start()
         self.logger.info("Запуск Telegram-бота…")
+
+        # Логируем информацию о включенных сервисах
+        enabled_services = get_enabled_services()
+        self.logger.info(f"Включенные сервисы: {', '.join(enabled_services) if enabled_services else 'Нет'}")
 
         # Запуск бота
         try:

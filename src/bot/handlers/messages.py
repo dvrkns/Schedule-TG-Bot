@@ -13,7 +13,7 @@ from src.bot.utils.helpers import current_week_parity
 class MessageHandlers:
     """Обработчики сообщений."""
 
-    def __init__(self, notification_service: NotificationService):
+    def __init__(self, notification_service):
         self.building_service = BuildingService()
         self.notification_service = notification_service
 
@@ -48,6 +48,14 @@ class MessageHandlers:
 
     async def _handle_time_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработка ввода времени для уведомления."""
+        # Проверяем, доступен ли сервис уведомлений
+        if not self.notification_service:
+            await update.message.reply_text(
+                "⚠️ Функция отправки ежедневных уведомлений в данный момент не работает.",
+                reply_markup=KeyboardBuilder.build_back_to_main_keyboard()
+            )
+            return
+
         time_txt = update.message.text.strip()
         time_valid = re.fullmatch(r"([0-1]?\d|2[0-3]):[0-5]\d", time_txt)
 

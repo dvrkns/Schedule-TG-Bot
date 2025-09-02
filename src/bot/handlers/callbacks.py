@@ -12,7 +12,7 @@ from src.bot.utils.helpers import current_week_parity
 class CallbackHandlers:
     """Обработчики callback-запросов."""
 
-    def __init__(self, notification_service: NotificationService):
+    def __init__(self, notification_service):
         self.schedule_service = ScheduleService()
         self.notification_service = notification_service
 
@@ -115,6 +115,14 @@ class CallbackHandlers:
 
     async def _handle_daily_notifications(self, query, context):
         """Обработка кнопки 'Ежедневные уведомления'."""
+        # Проверяем, доступен ли сервис уведомлений
+        if not self.notification_service:
+            await query.edit_message_text(
+                text="⚠️ Функция отправки ежедневных уведомлений в данный момент не работает.",
+                reply_markup=KeyboardBuilder.build_back_to_main_keyboard()
+            )
+            return
+
         uid = str(query.from_user.id)
         user_map = self.notification_service.get_user_notifications(uid)
 
@@ -139,6 +147,14 @@ class CallbackHandlers:
 
     async def _handle_notification_day_selection(self, query, context):
         """Обработка выбора дня для уведомления."""
+        # Проверяем, доступен ли сервис уведомлений
+        if not self.notification_service:
+            await query.edit_message_text(
+                text="⚠️ Функция отправки ежедневных уведомлений в данный момент не работает.",
+                reply_markup=KeyboardBuilder.build_back_to_main_keyboard()
+            )
+            return
+
         _, full_day = query.data.split("_", 1)
         uid = str(query.from_user.id)
         user_map = self.notification_service.get_user_notifications(uid)
@@ -169,6 +185,14 @@ class CallbackHandlers:
 
     async def _handle_edit_notification(self, query, context):
         """Обработка редактирования уведомления."""
+        # Проверяем, доступен ли сервис уведомлений
+        if not self.notification_service:
+            await query.edit_message_text(
+                text="⚠️ Функция отправки ежедневных уведомлений в данный момент не работает.",
+                reply_markup=KeyboardBuilder.build_back_to_main_keyboard()
+            )
+            return
+
         _, _, full_day = query.data.split("_", 2)
         context.user_data["awaiting_time"] = full_day
 
@@ -190,6 +214,14 @@ class CallbackHandlers:
 
     async def _handle_delete_notification(self, query, context):
         """Обработка удаления уведомления."""
+        # Проверяем, доступен ли сервис уведомлений
+        if not self.notification_service:
+            await query.edit_message_text(
+                text="⚠️ Функция отправки ежедневных уведомлений в данный момент не работает.",
+                reply_markup=KeyboardBuilder.build_back_to_main_keyboard()
+            )
+            return
+
         _, _, full_day = query.data.split("_", 2)
         uid = str(query.from_user.id)
         self.notification_service.remove_notification(uid, full_day)
