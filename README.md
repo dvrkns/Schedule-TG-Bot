@@ -1,6 +1,6 @@
-# TG-bot-schedule
+# Schedule-TG-Bot
 
-TG-bot-schedule is an open-source Telegram bot designed to provide accurate, simple, and reliable schedule management for educational institutions or organizations. The bot delivers up-to-date schedules, notifications, and interactive features to users directly in Telegram.
+Schedule-TG-Bot is an open-source Telegram bot designed to provide accurate, simple, and reliable schedule management for educational institutions or organizations. The bot delivers up-to-date schedules, notifications, and interactive features to users directly in Telegram.
 
 ## Why This Project Exists
 
@@ -31,8 +31,8 @@ Many existing solutions are either closed, complex, and have a lot of unnecessar
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/dvrkns/TG-bot-schedule.git
-   cd TG-bot-schedule
+   git clone https://github.com/dvrkns/Schedule-TG-Bot.git
+   cd Schedule-TG-Bot
    ```
 2. **Install Dependencies:**
    ```bash
