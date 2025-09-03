@@ -77,6 +77,19 @@ class DailyScheduleService:
             except Exception as thread_error:
                 logger.warning(f"Не удалось отправить в тред {THREAD_ID}: {thread_error}")
 
+                try:
+                    await self.app.bot.send_message(
+                        chat_id=GROUP_ID,
+                        text=message_text,
+                        parse_mode="HTML"
+                        # Без message_thread_id - отправляется в основной тред
+                    )
+                    logger.info(f"Расписание на {tomorrow.strftime('%d.%m.%Y')} успешно отправлено в основной тред группы")
+
+                except Exception as group_error:
+                    logger.error(f"Не удалось отправить ни в тред, ни в группу: {group_error}")
+                    raise group_error
+
 
         except Exception as e:
             logger.error(f"Ошибка при отправке расписания на завтра: {e}")
