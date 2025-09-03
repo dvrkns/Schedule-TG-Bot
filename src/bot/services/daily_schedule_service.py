@@ -5,7 +5,7 @@ from datetime import timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.bot.services.schedule_service import ScheduleService
-from src.utils.secrets import THREAD_ID
+from src.utils.secrets import THREAD_ID, GROUP_ID
 from src.bot.services.daily_schedule_service_utils import get_daily_schedule_time
 
 logger = logging.getLogger("tg_schedule_bot")
@@ -18,6 +18,7 @@ class DailyScheduleService:
         self.scheduler = scheduler
         self.app = app
         self.schedule_service = ScheduleService()
+        self._check_chat_accessibility()
         self._init_daily_schedule_job()
 
     def _init_daily_schedule_job(self):
@@ -32,6 +33,18 @@ class DailyScheduleService:
             id='daily_schedule_job'
         )
         logger.info(f"Ежедневная задача отправки расписания запланирована на {hour:02d}:{minute:02d}")
+
+    def _check_chat_accessibility(self):
+        """Проверить доступность чатов для отправки."""
+        logger.info(f"Проверка доступности чатов:")
+        logger.info(f"THREAD_ID: {THREAD_ID}")
+        logger.info(f"GROUP_ID: {GROUP_ID}")
+
+        # Проверяем, что ID не являются placeholder'ами
+        if THREAD_ID == "Thread number":
+            logger.warning("THREAD_ID не настроен (используется placeholder)")
+        if GROUP_ID == "Group ID":
+            logger.warning("GROUP_ID не настроен (используется placeholder)")
 
     async def _send_tomorrow_schedule(self):
         """Отправить расписание на следующий день."""
@@ -52,14 +65,35 @@ class DailyScheduleService:
                 f"{schedule_text}"
             )
 
-            # Отправляем в THREAD_ID
-            await self.app.bot.send_message(
-                chat_id=THREAD_ID,
-                text=message_text,
-                parse_mode="HTML"
-            )
+            # Пытаемся отправить в THREAD_ID, если не получится - в GROUP_ID
+            chat_id = THREAD_ID
+            message_thread_id = None
 
-            logger.info(f"Расписание на {tomorrow.strftime('%d.%m.%Y')} успешно отправлено в THREAD_ID")
+            try:
+                # Сначала пробуем отправить в тред
+                await self.app.bot.send_message(
+                    chat_id=chat_id,
+                    text=message_text,
+                    parse_mode="HTML"
+                )
+                logger.info(f"Расписание на {tomorrow.strftime('%d.%m.%Y')} успешно отправлено в THREAD_ID")
+
+            except Exception as thread_error:
+                logger.warning(f"Не удалось отправить в THREAD_ID ({THREAD_ID}): {thread_error}")
+
+                # Пробуем отправить в группу
+                try:
+                    chat_id = GROUP_ID
+                    await self.app.bot.send_message(
+                        chat_id=chat_id,
+                        text=message_text,
+                        parse_mode="HTML"
+                    )
+                    logger.info(f"Расписание на {tomorrow.strftime('%d.%m.%Y')} успешно отправлено в GROUP_ID")
+
+                except Exception as group_error:
+                    logger.error(f"Не удалось отправить ни в THREAD_ID, ни в GROUP_ID: {group_error}")
+                    raise group_error
 
         except Exception as e:
             logger.error(f"Ошибка при отправке расписания на завтра: {e}")
