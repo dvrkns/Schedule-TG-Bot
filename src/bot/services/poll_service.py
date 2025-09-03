@@ -6,12 +6,12 @@ from telegram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 def get_group_and_thread_id():
-    """Получение GroupID и ThreadID из src.utils.secrets"""
-    from src.utils.secrets import GROUP_ID, THREAD_ID
-    return GROUP_ID, THREAD_ID
+    """Получение GroupID и ThreadID для опросов из src.utils.secrets"""
+    from src.utils.secrets import GROUP_ID, POLL_THREAD_ID
+    return GROUP_ID, POLL_THREAD_ID
 
 async def send_presence_poll(bot: Bot, date: datetime.date):
-    """Отправить опрос о присутствии в тему группы"""
+    """Отправить опрос о присутствии в указанный тред группы"""
     group_id, thread_id = get_group_and_thread_id()
     if not group_id or not thread_id:
         return

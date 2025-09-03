@@ -5,7 +5,7 @@ from datetime import timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.bot.services.schedule_service import ScheduleService
-from src.utils.secrets import THREAD_ID, GROUP_ID
+from src.utils.secrets import SCHEDULE_THREAD_ID, GROUP_ID
 from src.bot.services.daily_schedule_service_utils import get_daily_schedule_time
 
 logger = logging.getLogger("tg_schedule_bot")
@@ -37,12 +37,12 @@ class DailyScheduleService:
     def _check_chat_accessibility(self):
         """Проверить доступность чатов для отправки."""
         logger.info(f"Проверка доступности чатов:")
-        logger.info(f"THREAD_ID: {THREAD_ID}")
+        logger.info(f"SCHEDULE_THREAD_ID: {SCHEDULE_THREAD_ID}")
         logger.info(f"GROUP_ID: {GROUP_ID}")
 
         # Проверяем, что ID не являются placeholder'ами
-        if THREAD_ID == "Thread number":
-            logger.warning("THREAD_ID не настроен (используется placeholder)")
+        if SCHEDULE_THREAD_ID == "Thread number":
+            logger.warning("SCHEDULE_THREAD_ID не настроен (используется placeholder)")
         if GROUP_ID == "Group ID":
             logger.warning("GROUP_ID не настроен (используется placeholder)")
 
@@ -70,12 +70,12 @@ class DailyScheduleService:
                     chat_id=GROUP_ID,  # Всегда отправляем в группу
                     text=message_text,
                     parse_mode="HTML",
-                    message_thread_id=THREAD_ID  # Указываем ID треда
+                    message_thread_id=SCHEDULE_THREAD_ID  # Указываем ID треда
                 )
                 logger.info(f"Расписание на {tomorrow.strftime('%d.%m.%Y')} успешно отправлено в тред {THREAD_ID}")
 
             except Exception as thread_error:
-                logger.warning(f"Не удалось отправить в тред {THREAD_ID}: {thread_error}")
+                logger.warning(f"Не удалось отправить в тред {SCHEDULE_THREAD_ID}: {thread_error}")
 
                 try:
                     await self.app.bot.send_message(
