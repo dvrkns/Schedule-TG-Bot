@@ -2,6 +2,16 @@
 import datetime
 
 
+def is_admin(user_id: int) -> bool:
+    """Проверить, является ли пользователь администратором."""
+    from src.utils.secrets import ADMIN_ID
+    try:
+        admin_id = int(ADMIN_ID)
+        return user_id == admin_id
+    except (ValueError, TypeError):
+        return False
+
+
 def current_week_parity() -> str:
     """Возвращает строку, описывающую чётность текущей учебной недели.
 

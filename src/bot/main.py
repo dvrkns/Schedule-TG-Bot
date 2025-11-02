@@ -102,6 +102,7 @@ class Bot:
         self.application.add_handler(CommandHandler("campus", self.command_handlers.campus))
         self.application.add_handler(CommandHandler("search", self.command_handlers.search))
         self.application.add_handler(CommandHandler("dev", self.command_handlers.dev))
+        self.application.add_handler(CommandHandler("msg", self.command_handlers.msg))
 
         # Добавляем обработчики callback-запросов
         self.application.add_handler(
