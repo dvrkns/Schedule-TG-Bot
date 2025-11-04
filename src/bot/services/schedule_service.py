@@ -52,11 +52,8 @@ class ScheduleService:
 
         if not has_pairs:
             # Если пар нет, выводим сообщение о выходных
-            lines.append("")
             lines.append("<b>Удачных выходных!</b>")
             return "\n".join(lines)
-
-        lines.append("")
 
         for idx, pair in enumerate(pairs_raw):
             if pair is None:
@@ -106,11 +103,8 @@ class ScheduleService:
 
         if not has_pairs:
             # Если пар нет, выводим сообщение о выходных
-            lines.append("")
             lines.append("<b>Удачных выходных!</b>")
             return "\n".join(lines)
-
-        lines.append("")
 
         for idx, pair in enumerate(pairs_raw):
             if pair is None:
