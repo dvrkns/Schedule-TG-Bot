@@ -138,6 +138,7 @@ class CommandHandlers:
         if context.args:
             await self._lookup_room(update, context, context.args[0])
         else:
+            context.user_data["awaiting_room"] = True
             text = "Введите после команды номер аудитории."
             if update.effective_chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
                 await context.bot.send_message(
