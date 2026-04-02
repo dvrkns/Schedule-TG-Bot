@@ -6,6 +6,7 @@ from telegram.ext import ContextTypes
 from src.bot.keyboards.keyboards import KeyboardBuilder
 from src.bot.services.schedule_service import ScheduleService
 from src.bot.services.building_service import BuildingService
+from src.bot.services.block_service import BlockService
 from src.bot.utils.helpers import current_week_parity, is_admin
 
 
@@ -15,11 +16,17 @@ class CommandHandlers:
     def __init__(self):
         self.schedule_service = ScheduleService()
         self.building_service = BuildingService()
+        self.block_service = BlockService()
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /start."""
         # Проверяем, что команда вызвана в личных сообщениях
         if update.effective_chat.type != ChatType.PRIVATE:
+            return
+
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
             return
 
         # Сброс состояния ожидания аудитории, если было
@@ -35,6 +42,11 @@ class CommandHandlers:
 
     async def campus(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /campus."""
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            return
+
         photo_path = "assets/campus.jpg"
         caption = "Карта территории кампуса."
         try:
@@ -58,6 +70,11 @@ class CommandHandlers:
 
     async def today(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /today."""
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            return
+
         text = self.schedule_service.build_today_schedule_text()
         if update.effective_chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
             await context.bot.send_message(
@@ -73,6 +90,11 @@ class CommandHandlers:
 
     async def tomorrow(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /tomorrow."""
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            return
+
         text = self.schedule_service.build_tomorrow_schedule_text()
         if update.effective_chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
             await context.bot.send_message(
@@ -88,6 +110,11 @@ class CommandHandlers:
 
     async def timetable(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /timetable."""
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            return
+
         text = self.schedule_service.build_bell_schedule_text()
         if update.effective_chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
             await context.bot.send_message(
@@ -103,6 +130,11 @@ class CommandHandlers:
 
     async def search(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /search."""
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            return
+
         if context.args:
             await self._lookup_room(update, context, context.args[0])
         else:
@@ -117,6 +149,11 @@ class CommandHandlers:
 
     async def dev(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик команды /dev."""
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            return
+
         msg = (
             "<b>👨‍💻 Разработчик бота:</b> @secnd_chance\n"
             "<b>💻 Использованные технологии:</b>\n"
@@ -177,6 +214,76 @@ class CommandHandlers:
                 await update.message.reply_text("✅ Сообщение успешно отправлено в группу.")
         except Exception as e:
             await update.message.reply_text(f"❌ Ошибка при отправке сообщения: {e}")
+
+    async def block(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Обработчик команды /block для администратора (скрытая команда)."""
+        chat_type = update.effective_chat.type
+        if chat_type not in [ChatType.PRIVATE, ChatType.GROUP, ChatType.SUPERGROUP]:
+            return
+
+        # Не админ — молча выходим, скрытая команда
+        if not is_admin(update.effective_user.id):
+            return
+
+        # Получаем user_id из аргументов или из reply
+        target_user_id = None
+        if update.message.reply_to_message and update.message.reply_to_message.from_user:
+            target_user_id = update.message.reply_to_message.from_user.id
+        elif context.args:
+            try:
+                target_user_id = int(context.args[0])
+            except (ValueError, IndexError):
+                pass
+
+        if not target_user_id:
+            # Подсказка только в личном чате
+            if chat_type == ChatType.PRIVATE:
+                await update.message.reply_text(
+                    "Использование: /block [user_id] или ответ на сообщение пользователя."
+                )
+            return
+
+        if is_admin(target_user_id):
+            if chat_type == ChatType.PRIVATE:
+                await update.message.reply_text("Нельзя заблокировать администратора.")
+            return
+
+        self.block_service.block_user(target_user_id)
+        # Сообщение об успехе только в личном чате
+        if chat_type == ChatType.PRIVATE:
+            await update.message.reply_text(f"Пользователь {target_user_id} заблокирован.")
+
+    async def unblock(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Обработчик команды /unblock для администратора (скрытая команда)."""
+        chat_type = update.effective_chat.type
+        if chat_type not in [ChatType.PRIVATE, ChatType.GROUP, ChatType.SUPERGROUP]:
+            return
+
+        # Не админ — молча выходим, скрытая команда
+        if not is_admin(update.effective_user.id):
+            return
+
+        # Получаем user_id из аргументов или из reply
+        target_user_id = None
+        if update.message.reply_to_message and update.message.reply_to_message.from_user:
+            target_user_id = update.message.reply_to_message.from_user.id
+        elif context.args:
+            try:
+                target_user_id = int(context.args[0])
+            except (ValueError, IndexError):
+                pass
+
+        if not target_user_id:
+            if chat_type == ChatType.PRIVATE:
+                await update.message.reply_text(
+                    "Использование: /unblock [user_id] или ответ на сообщение пользователя."
+                )
+            return
+
+        self.block_service.unblock_user(target_user_id)
+        # Сообщение об успехе только в личном чате
+        if chat_type == ChatType.PRIVATE:
+            await update.message.reply_text(f"Пользователь {target_user_id} разблокирован.")
 
     async def _lookup_room(self, update: Update, context: ContextTypes.DEFAULT_TYPE, room_text: str) -> None:
         """Поиск корпуса по номеру аудитории."""

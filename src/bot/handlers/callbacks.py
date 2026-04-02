@@ -6,6 +6,7 @@ from telegram.ext import ContextTypes
 from src.bot.keyboards.keyboards import KeyboardBuilder
 from src.bot.services.schedule_service import ScheduleService
 from src.bot.services.notification_service import NotificationService
+from src.bot.services.block_service import BlockService
 from src.bot.utils.helpers import current_week_parity
 
 
@@ -15,11 +16,19 @@ class CallbackHandlers:
     def __init__(self, notification_service):
         self.schedule_service = ScheduleService()
         self.notification_service = notification_service
+        self.block_service = BlockService()
 
     async def handle_menu_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Обработчик нажатий кнопок главного меню."""
         # Проверяем, что callback отправлен в личных сообщениях
         if update.effective_chat.type != ChatType.PRIVATE:
+            return
+
+        # Проверяем блокировку пользователя
+        user_id = update.effective_user.id
+        if self.block_service.is_blocked(user_id):
+            query = update.callback_query
+            await query.answer()
             return
 
         query = update.callback_query

@@ -103,6 +103,8 @@ class Bot:
         self.application.add_handler(CommandHandler("search", self.command_handlers.search))
         self.application.add_handler(CommandHandler("dev", self.command_handlers.dev))
         self.application.add_handler(CommandHandler("msg", self.command_handlers.msg))
+        self.application.add_handler(CommandHandler("block", self.command_handlers.block))
+        self.application.add_handler(CommandHandler("unblock", self.command_handlers.unblock))
 
         # Добавляем обработчики callback-запросов
         self.application.add_handler(
